@@ -1,0 +1,128 @@
+# PyRosetta Binding Energy Skill
+
+PyRosetta skill for binding energy calculation with mandatory workflow:
+
+1. Relax (`FastRelax`)
+2. Interface binding energy (`dG_interface`)
+
+The skill supports:
+- Auto-selection of largest-cluster representative structure per clone/species
+- Direct input structure scoring (`--input-cif`)
+
+## Repository Contents
+
+- `SKILL.md`: skill definition for agent loading
+- `compute_binding_dg.py`: main calculator
+- `requirements.txt`: Python dependencies
+- `scripts/install_dependencies.sh`: runtime dependency installer
+- `scripts/install_skill_agent.sh`: one-step agent skill installer
+
+## Dependencies
+
+Required Python packages:
+- `numpy`
+- `biopython`
+- `pyrosettacolabsetup`
+- `pyrosetta` (installed via wheel URL in `install_dependencies.sh`)
+
+Install all dependencies:
+
+```bash
+chmod +x scripts/install_dependencies.sh
+./scripts/install_dependencies.sh
+```
+
+If auto wheel install fails for your Python version, install a compatible PyRosetta wheel manually and re-run.
+
+## Installation - Agent (recommended)
+
+This installs the skill into `~/.claude/skills/pyrosetta-binding-energy`.
+
+```bash
+chmod +x scripts/install_skill_agent.sh
+./scripts/install_skill_agent.sh
+./scripts/install_dependencies.sh
+```
+
+After installation, the agent can load/use `pyrosetta-binding-energy` skill.
+
+## Installation - Manual
+
+1. Create skill folder:
+
+```bash
+mkdir -p ~/.claude/skills/pyrosetta-binding-energy
+```
+
+2. Copy files:
+
+```bash
+cp SKILL.md ~/.claude/skills/pyrosetta-binding-energy/SKILL.md
+cp compute_binding_dg.py ~/.claude/skills/pyrosetta-binding-energy/compute_binding_dg.py
+cp requirements.txt ~/.claude/skills/pyrosetta-binding-energy/requirements.txt
+chmod +x ~/.claude/skills/pyrosetta-binding-energy/compute_binding_dg.py
+```
+
+3. Install dependencies:
+
+```bash
+./scripts/install_dependencies.sh
+```
+
+## Usage
+
+### 1) Auto representative selection mode
+
+```bash
+python compute_binding_dg.py \
+  --clone-id hmsame3_0234 \
+  --species human \
+  --clone-dir /path/to/structure_prediction_designedNMb_aligned \
+  --chain-a A \
+  --chain-b B \
+  --cluster-cutoff 0.2 \
+  --relax-cycles 5 \
+  --scorefxn ref2015 \
+  --output-json /path/to/output/hmsame3_0234_human.json
+```
+
+### 2) Direct input structure mode
+
+```bash
+python compute_binding_dg.py \
+  --input-cif /path/to/model.cif \
+  --chain-a A \
+  --chain-b B \
+  --relax-cycles 5 \
+  --scorefxn ref2015 \
+  --output-json /path/to/output/model_energy.json
+```
+
+### 3) Selection-only mode (no PyRosetta run)
+
+```bash
+python compute_binding_dg.py \
+  --clone-id hmsame3_0234 \
+  --species mouse \
+  --clone-dir /path/to/structure_prediction_designedNMb_aligned \
+  --select-only \
+  --output-json /path/to/output/mouse_selected.json
+```
+
+## Output Schema
+
+Output JSON includes:
+- `input_cif`
+- `selection` (largest-cluster metadata)
+- `energies`:
+  - `relaxed_total_score`
+  - `dG_interface`
+  - `dG_crossterm`
+  - `packstat`
+  - `complexed_sasa`
+
+## Notes
+
+- Default interface is `A_B`; change `--chain-a/--chain-b` when chain IDs differ.
+- For long batch runs, consider running under `tmux`/`screen`.
+- Keep runtime environment consistent when comparing clone rankings.
