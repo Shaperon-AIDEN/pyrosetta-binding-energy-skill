@@ -20,6 +20,7 @@ python compute_binding_dg.py \
   --clone-id hmsame3_0234 \
   --species human \
   --clone-dir /path/to/structures \
+  --cpu-threads 8 \
   --output-json /path/to/out/hmsame3_0234_human.json
 ```
 

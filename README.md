@@ -81,6 +81,7 @@ python compute_binding_dg.py \
   --chain-a A \
   --chain-b B \
   --cluster-cutoff 0.2 \
+  --cpu-threads 8 \
   --relax-cycles 5 \
   --scorefxn ref2015 \
   --output-json /path/to/output/hmsame3_0234_human.json
@@ -93,6 +94,7 @@ python compute_binding_dg.py \
   --input-cif /path/to/model.cif \
   --chain-a A \
   --chain-b B \
+  --cpu-threads 8 \
   --relax-cycles 5 \
   --scorefxn ref2015 \
   --output-json /path/to/output/model_energy.json
@@ -124,5 +126,6 @@ Output JSON includes:
 ## Notes
 
 - Default interface is `A_B`; change `--chain-a/--chain-b` when chain IDs differ.
+- Use `--cpu-threads N` to limit CPU thread usage (sets `OMP_NUM_THREADS`, `OPENBLAS_NUM_THREADS`, `MKL_NUM_THREADS`, `NUMEXPR_NUM_THREADS`).
 - For long batch runs, consider running under `tmux`/`screen`.
 - Keep runtime environment consistent when comparing clone rankings.

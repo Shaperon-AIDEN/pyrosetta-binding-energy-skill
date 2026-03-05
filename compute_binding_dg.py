@@ -5,6 +5,7 @@ import argparse
 import importlib
 import json
 import math
+import os
 import re
 from collections.abc import Mapping
 from pathlib import Path
@@ -166,7 +167,17 @@ def run_pyrosetta_relax_and_dg(
     chain_b: str,
     relax_cycles: int,
     scorefxn_name: str,
+    cpu_threads: int | None,
 ) -> dict[str, float]:
+    if cpu_threads is not None:
+        if cpu_threads < 1:
+            raise ValueError(f"--cpu-threads must be >= 1, got {cpu_threads}")
+        thread_value = str(cpu_threads)
+        os.environ["OMP_NUM_THREADS"] = thread_value
+        os.environ["OPENBLAS_NUM_THREADS"] = thread_value
+        os.environ["MKL_NUM_THREADS"] = thread_value
+        os.environ["NUMEXPR_NUM_THREADS"] = thread_value
+
     try:
         pyrosetta = importlib.import_module("pyrosetta")
     except Exception as exc:
@@ -240,6 +251,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--cluster-cutoff", type=float, default=0.2, help="RMSD cutoff in Angstrom for largest cluster")
     p.add_argument("--relax-cycles", type=int, default=5)
     p.add_argument("--scorefxn", type=str, default="ref2015")
+    p.add_argument("--cpu-threads", type=int, default=None, help="Limit CPU threads for PyRosetta/BLAS backends")
     p.add_argument("--select-only", action="store_true", help="Only select representative structure, skip PyRosetta Relax/dG")
     p.add_argument("--output-json", type=Path, required=True)
     return p
@@ -275,6 +287,7 @@ def main() -> int:
             chain_b=args.chain_b,
             relax_cycles=args.relax_cycles,
             scorefxn_name=args.scorefxn,
+            cpu_threads=args.cpu_threads,
         )
 
     out = {
@@ -282,6 +295,7 @@ def main() -> int:
         "chain_a": args.chain_a,
         "chain_b": args.chain_b,
         "scorefxn": args.scorefxn,
+        "cpu_threads": args.cpu_threads,
         "relax_cycles": args.relax_cycles,
         "selection": rep_meta,
         "energies": energies,
